@@ -12,14 +12,14 @@ with open("styles/main.css") as f:
     st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True) 
     
 st.title("Strømpriser")
-client = EntsoePandasClient(api_key="dcc398a5-838e-47f1-b572-0499b48ad580")
+client = EntsoePandasClient(api_key=st.secrets["entsoe_apikey"])
 
 st.markdown("""
             Appen henter inn strømpriser for valgt tidsperiode og region fra *ENTSO-E API*. 
             Prisene konvertes videre fra EUR/MWh til NOK/kWh med *forex-python* som benytter historiske
             valutakurser per dag. Den siste prosessen har lang kjøretid.""")
 elprice_df = pd.DataFrame()
-selected_timeinterval = st.selectbox("Velg tidsintervall", options=["2018-2019", "2019-2020", "2020-2021", "2021-2022", "2022-2023", "2023-nå"])
+selected_timeinterval = st.selectbox("Velg tidsintervall", options=["2018-2019", "2019-2020", "2020-2021", "2021-2022", "2022-2023", "2023-nå"], index=5)
 start_time = pd.Timestamp(f"{selected_timeinterval[0:4]}" + "0101", tz="Europe/Brussels")
 time = start_time
 c = CurrencyRates()
