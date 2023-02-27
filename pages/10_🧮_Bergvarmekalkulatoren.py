@@ -3,13 +3,15 @@ import streamlit as st
 import pydeck as pdk
 import pandas as pd
 
+st.set_page_config(page_title="Bergvarmekalkulatoren", page_icon="🧮")
+
+with open("styles/main.css") as f:
+    st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True) 
+
 deta = Deta("a0558p23_1qnSrugdeUhAokVe8AvE5w9HyNSnt6yx")
 
 db = deta.Base("Bergvarmekalkulatoren")
 
-def fetch_all_data():
-    res = db.fetch()
-    return res.items
 
 def get_data(address):
     return db.get(address)
@@ -51,7 +53,7 @@ class Location:
 st.title("Bergvarmekalkulatoren") 
 
 st.subheader("[Kalkulatoren](%s)" % "https://bergvarmekalkulatoren.webflow.io/")
-df = db.fetch_all_data()
+df = db.fetch().items
 st.subheader(f"Antall besøkende: {len(df)}")
 with st.expander("Se tabell"):
     st.dataframe(df)

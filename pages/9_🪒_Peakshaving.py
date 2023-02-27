@@ -1,7 +1,13 @@
 import numpy as np
 import streamlit as st
+import pandas as pd
 import scipy
 import copy
+
+st.set_page_config(page_title="Peakshaving", page_icon="🪒")
+
+with open("styles/main.css") as f:
+    st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True) 
 
 def peakshaving(energy_arr, REDUCTION, TO_TEMP, FROM_TEMP):
     energy_arr = copy.deepcopy(energy_arr)
@@ -47,3 +53,14 @@ def peakshaving(energy_arr, REDUCTION, TO_TEMP, FROM_TEMP):
         height = round(4*tank_size/(scipy.pi*diameter**2),1)
         st.caption(f"{i}) Diameter: {diameter} m | Høyde: {height} m")
     return peakshaving_arr, max(peakshaving_arr)
+
+st.title("Peakshaving")
+st.header("Last opp fil")
+uploaded_array = st.file_uploader("Last opp timeserie i kW")
+if uploaded_array:
+    df = pd.read_excel(uploaded_array, header=None)
+    demand_array = df.iloc[:,0].to_numpy()
+    st.area_chart(demand_array)
+    st.line_chart(np.sort(demand_array)[::-1])
+else:
+    st.stop()
