@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from io import BytesIO
 import altair as alt
+from streamlit_extras.chart_container import chart_container
 
 from scripts.__profet import PROFet
 from scripts.__utils import Plotting
@@ -42,24 +43,41 @@ if selected_input == "PROFet":
         "x" : np.arange(0,8760,1),
         "y" : demand_array
         })
-    st.altair_chart(alt.Chart(data).mark_area(color = 'darkgreen', line = {'color':'darkgreen'}, opacity = 1).encode(
-        x=alt.X("x", axis=alt.Axis(title="Timer i ett år"), scale=alt.Scale(domain=(0,8760))),
-        y=alt.Y("y", axis=alt.Axis(title="Timesmidlet effekt [kWh/h]"))), theme="streamlit", use_container_width=True)
+    with chart_container(data):
+        st.altair_chart(alt.Chart(data).mark_area(color = '#1d3c34', line = {'color':'#1d3c34'}, opacity = 1).encode(
+            x=alt.X("x", axis=alt.Axis(title="Timer i ett år"), scale=alt.Scale(domain=(0,8760))),
+            y=alt.Y("y", axis=alt.Axis(title="Timesmidlet effekt [kWh/h]"))), theme="streamlit", use_container_width=True)
     
     data = pd.DataFrame({
         "x" : np.arange(0,8760,1),
         "y" : np.sort(demand_array)[::-1]
         })
-    st.altair_chart(alt.Chart(data).mark_area(color = 'green', line = {'color':'green'}, opacity = 1).encode(
-        x=alt.X("x", axis=alt.Axis(title="Timer i ett år"), scale=alt.Scale(domain=(0,8760))),
-        y=alt.Y("y", axis=alt.Axis(title="Timesmidlet effekt [kWh/h]"))), theme="streamlit", use_container_width=True)
+    with chart_container(data):
+        st.altair_chart(alt.Chart(data).mark_line(color = '#1d3c34', line = {'color':'#1d3c34'}, opacity = 1).encode(
+            x=alt.X("x", axis=alt.Axis(title="Timer i ett år"), scale=alt.Scale(domain=(0,8760))),
+            y=alt.Y("y", axis=alt.Axis(title="Timesmidlet effekt [kWh/h]"))), theme="streamlit", use_container_width=True)
 
     #--
-    st.subheader("Elspesifikt energibehov fra PROFet")
-    with st.expander("Elspesifikt behov"):
+    st.subheader("El-spesifikt energibehov fra PROFet")
+    with st.expander("El-spesifikt behov"):
         electric_array, selected_array = energy_demand.get_electric_array_()
-        st.area_chart(electric_array)
-        st.line_chart(np.sort(electric_array)[::-1])
+        data = pd.DataFrame({
+        "x" : np.arange(0,8760,1),
+        "y" : electric_array
+        })
+        with chart_container(data):
+            st.altair_chart(alt.Chart(data).mark_area(color = '#b7dc8f', line = {'color':'#b7dc8f'}, opacity = 1).encode(
+                x=alt.X("x", axis=alt.Axis(title="Timer i ett år"), scale=alt.Scale(domain=(0,8760))),
+                y=alt.Y("y", axis=alt.Axis(title="Timesmidlet effekt [kWh/h]"))), theme="streamlit", use_container_width=True)
+        data = pd.DataFrame({
+        "x" : np.arange(0,8760,1),
+        "y" : np.sort(electric_array)[::-1]
+        })
+        with chart_container(data):
+            st.altair_chart(alt.Chart(data).mark_line(color = '#b7dc8f', line = {'color':'#b7dc8f'}, opacity = 1).encode(
+                x=alt.X("x", axis=alt.Axis(title="Timer i ett år"), scale=alt.Scale(domain=(0,8760))),
+                y=alt.Y("y", axis=alt.Axis(title="Timesmidlet effekt [kWh/h]"))), theme="streamlit", use_container_width=True)
+        
 else:
     st.subheader("Last opp fil")
     uploaded_array = st.file_uploader("Last opp timeserie i kW")
