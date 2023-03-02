@@ -31,7 +31,7 @@ selected_regions = st.multiselect("Velg region", options=["NO_1", "NO_2", "NO_3"
 if selected_regions:
     progress_bar = st.progress(0)
     for region in selected_regions:
-        price_series = client.query_day_ahead_prices(region, start = start_time, end = end_time, freq='B').to_numpy()
+        price_series = client.query_day_ahead_prices(region, start = start_time, end = end_time).to_numpy()
         for index, value in enumerate(price_series):
             if (index % 24) == 0:
                 progress_bar.progress((index)/8760, text = "Henter inn data...")
