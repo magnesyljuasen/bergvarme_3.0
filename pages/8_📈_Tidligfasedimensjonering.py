@@ -19,7 +19,7 @@ st.set_page_config(page_title="Tidligfasedimensjonering", page_icon="📈")
 with open("styles/main.css") as f:
     st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True) 
     
-st.title("Tidligfasedimensjonering av energibrønffffnpark")
+st.title("Tidligfasedimensjonering av energibrønnpark")
 st.caption("Spørsmål til verktøyet? 📧 magne.syljuasen@asplanviak.no ")
 with st.expander("Hva er dette?"):
     st.header("Hva er dette?")
@@ -95,7 +95,15 @@ annual_cooling_demand = st.number_input("Legg inn årlig kjølebehov [kWh]", min
 cooling_effect = st.number_input("Legg inn kjøleeffekt [kW]", min_value=0, value=0, step=100)
 cooling_per_month = annual_cooling_demand * np.array([0.025, 0.05, 0.05, .05, .075, .1, .2, .2, .1, .075, .05, .025])
 months = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"]
-st.bar_chart(cooling_per_month)
+data = pd.DataFrame({
+    "x" : months,
+    "y" : cooling_per_month
+    })
+with chart_container(data):
+    st.altair_chart(alt.Chart(data).mark_bar(color = '#1d3c34', line = {'color':'#1d3c34'}, opacity = 1).encode(
+        x=alt.X("x", axis=alt.Axis(title="Måneder")),
+        y=alt.Y("y", axis=alt.Axis(title="Kjølebehov [kWh]"))), theme="streamlit", use_container_width=True)
+
 st.markdown("---")
 #--
 st.subheader("Dekningsgrad")
@@ -104,70 +112,63 @@ energy_coverage.COVERAGE = st.number_input("Velg energidekningsgrad [%]", min_va
 energy_coverage._coverage_calculation()
 st.caption(f"**Varmepumpe: {energy_coverage.heat_pump_size} kW | Effektdekningsgrad: {int(round((energy_coverage.heat_pump_size/np.max(demand_array))*100,0))} %**")
 
-import plotly.graph_objects as px
-import numpy
-  
-  
-# creating random data through randomint 
-# function of numpy.random 
-np.random.seed(42)
-  
-random_x= np.random.randint(1,101,100) 
-random_y= np.random.randint(1,101,100)
-  
-x = ['A', 'B', 'C', 'D']
-  
-plot = px.Figure()
-  
-plot.add_trace(px.Scatter(
-    name = 'Data 1',
-    x = np.arange(0,8760,1),
-    y = energy_coverage.covered_arr,
-    stackgroup='one'
-   ))
-  
-plot.add_trace(px.Scatter(
-    name = 'Data 2',
-    x = np.arange(0,8760,1),
-    y = energy_coverage.non_covered_arr,
-    stackgroup='one'
-   )
-)
-st.plotly_chart(plot, theme="streamlit", use_container_width=True)
-
 data = pd.DataFrame({
-    "x" : np.arange(0,8760,1),
-    "Grunnvarmedekning" : energy_coverage.covered_arr,
-    "Spisslast" : energy_coverage.non_covered_arr
-})
-wide_form = pd.DataFrame({
-    'Varighet (timer)' : np.arange(0,8760,1),
+    'Timer i ett år' : np.arange(0,8760,1),
     'Spisslast' : energy_coverage.non_covered_arr,
     'a' : energy_coverage.covered_arr, 
     })
 
-c = alt.Chart(wide_form).transform_fold(
+with chart_container(data):
+    c = alt.Chart(data).transform_fold(
     ['a', 'Spisslast'],
-    as_=['key', 'Timesmidlet effekt (kWh/h)']).mark_area(interpolate='step-before').encode(
-        x=alt.X('Varighet (timer):Q', scale=alt.Scale(domain=[0, 8760])),
+    as_=['key', 'Timesmidlet effekt (kWh/h)']).mark_bar(color = '#b7dc8f', line = {'color':'#b7dc8f'}, opacity=1).encode(
+        x=alt.X('Timer i ett år:Q', scale=alt.Scale(domain=[0, 8760])),
         y=alt.Y('Timesmidlet effekt (kWh/h):Q', stack = True),
         color=alt.Color('key:N', scale=alt.Scale(domain=['a', 'Spisslast'], 
         range=['#1d3c34', '#ffdb9a']), legend=alt.Legend(orient='top', direction='vertical', title=None))
     )
-st.altair_chart(c, use_container_width=True)
+    st.altair_chart(c, use_container_width=True)
 
-st.area_chart(energy_coverage.covered_arr)
-st.area_chart(energy_coverage.non_covered_arr)
 #Plotting().hourly_stack_plot(energy_coverage.covered_arr, energy_coverage.non_covered_arr, "Grunnvarmedekning", "Spisslast (dekkes ikke av brønnparken)", Plotting().FOREST_GREEN, Plotting().SUN_YELLOW)
 #Plotting().hourly_stack_plot(np.sort(energy_coverage.covered_arr)[::-1], np.sort(energy_coverage.non_covered_arr)[::-1], "Grunnvarmedekning", "Spisslast (dekkes ikke av brønnparken)", Plotting().FOREST_GREEN, Plotting().SUN_YELLOW)
 #--
 st.subheader("Årsvarmefaktor")
 energy_coverage.COP = st.number_input("Velg årsvarmefaktor (SCOP)", min_value=1.0, value=3.5, max_value=5.0, step=0.2)
 energy_coverage._geoenergy_cop_calculation()
-Plotting().hourly_triple_stack_plot(energy_coverage.gshp_compressor_arr, energy_coverage.gshp_delivered_arr, 
-energy_coverage.non_covered_arr, "Strøm til varmepumpe", "Levert fra brønn(er)", "Spisslast (dekkes ikke av brønnparken)", Plotting().FOREST_GREEN, Plotting().GRASS_GREEN, Plotting().SUN_YELLOW)
-Plotting().hourly_triple_stack_plot(np.sort(energy_coverage.gshp_compressor_arr)[::-1], np.sort(energy_coverage.gshp_delivered_arr)[::-1], 
-np.sort(energy_coverage.non_covered_arr)[::-1], "Strøm til varmepumpe", "Levert fra brønn(er)", "Spisslast (dekkes ikke av brønnparken)", Plotting().FOREST_GREEN, Plotting().GRASS_GREEN, Plotting().SUN_YELLOW)
+data = pd.DataFrame({
+    'Timer i ett år' : np.arange(0,8760,1),
+    'Spisslast' : energy_coverage.gshp_delivered_arr,
+    "Levert fra brønner" : energy_coverage.non_covered_arr,
+    'Strøm til varmepumpe' : energy_coverage.gshp_compressor_arr, 
+    })
+with chart_container(data):
+    c = alt.Chart(data).transform_fold(
+    ['Spisslast', 'Levert fra brønner', 'Strøm til varmepumpe'],
+    as_=['key', 'Timesmidlet effekt (kWh/h)']).mark_bar(color = '#b7dc8f', line = {'color':'#b7dc8f'}, opacity=1).encode(
+        x=alt.X('Timer i ett år:Q', scale=alt.Scale(domain=[0, 8760])),
+        y=alt.Y('Timesmidlet effekt (kWh/h):Q', stack = True),
+        color=alt.Color('key:N', scale=alt.Scale(domain=['Spisslast', 'Levert fra brønner', 'Strøm til varmepumpe'], 
+        range=['#1d3c34', '#ffdb9a', '#ffdb3b']), legend=alt.Legend(orient='top', direction='vertical', title=None))
+    )
+    st.altair_chart(c, use_container_width=True)
+#--
+data = pd.DataFrame({
+    'Varighet (timer)' : np.arange(0,8760,1),
+    'Spisslast' : np.sort(energy_coverage.gshp_delivered_arr)[::-1],
+    "Levert fra brønner" : np.sort(energy_coverage.non_covered_arr)[::-1],
+    'Strøm til varmepumpe' : np.sort(energy_coverage.gshp_compressor_arr)[::-1], 
+    })
+with chart_container(data):
+    c = alt.Chart(data).transform_fold(
+    ['Spisslast', 'Levert fra brønner', 'Strøm til varmepumpe'],
+    as_=['key', 'Timesmidlet effekt (kWh/h)']).mark_bar(color = '#b7dc8f', line = {'color':'#b7dc8f'}, opacity=1).encode(
+        x=alt.X('Varighet (timer):Q', scale=alt.Scale(domain=[0, 8760])),
+        y=alt.Y('Timesmidlet effekt (kWh/h):Q', stack = True),
+        color=alt.Color('key:N', scale=alt.Scale(domain=['Spisslast', 'Levert fra brønner', 'Strøm til varmepumpe'], 
+        range=['#1d3c34', '#ffdb9a', '#ffdb3b']), legend=alt.Legend(orient='top', direction='vertical', title=None))
+    )
+    st.altair_chart(c, use_container_width=True)
+
 st.markdown("---")
 #--
 #    st.subheader("Alternativer for Spisslast (dekkes ikke av brønnparken)")
@@ -245,31 +246,6 @@ heat_carrier_fluid_capacities = [4.298, 4.061, 3.455, 3.251, 3.156]
 simulation_obj.DENSITY = heat_carrier_fluid_densities[heat_carrier_fluid]
 simulation_obj.HEAT_CAPACITY = heat_carrier_fluid_capacities[heat_carrier_fluid]
 simulation_obj._run_simulation()
-with st.expander("Per time. NB! Denne tar lang tid, men er mer nøyaktig."):
-    pygf = Simulation()
-    pygf.select_borehole_field(simulation_obj.N_1 * simulation_obj.N_2)
-    if st.button("Kjør timesimulering"):
-        with st.spinner("Beregner..."):
-            pygf.YEARS = 25
-            pygf.U_PIPE = "Single"  # Choose between "Single" and "Double"
-            pygf.R_B = simulation_obj.RADIUS  # Radius (m)
-            pygf.R_OUT = 0.020  # Pipe outer radius (m)
-            pygf.R_IN = 0.0176  # Pipe inner radius (m)
-            pygf.D_S = 0.067/2  # Shank spacing (m)
-            pygf.EPSILON = 1.0e-6  # Pipe roughness (m)
-            pygf.ALPHA = 1.39e-6  # Ground thermal diffusivity (m2/s)
-            pygf.K_S = simulation_obj.K_S  # Ground thermal conductivity (W/m.K)            
-            pygf.T_G = simulation_obj.T_G  # Undisturbed ground temperature (degrees)   
-            pygf.K_G = 2  # Grout thermal conductivity (W/m.K)
-            pygf.K_P = 0.42  # Pipe thermal conductivity (W/m.K)
-            pygf.H = simulation_obj.H  # Borehole depth (m)
-            pygf.B = simulation_obj.B  # Distance between boreholes (m)
-            pygf.D = 0  # Borehole buried depth
-            pygf.FLOW_RATE = 0.5  # Flow rate (kg/s)
-            pygf.FLUID_NAME = "MPG"  # The fluid is propylene-glycol 
-            pygf.FLUID_DEGREES = 5  # at 20 degC
-            pygf.BOUNDARY_CONDITION = 'MIFT'
-            pygf.run_simulation(energy_coverage.gshp_delivered_arr)
 
 
 st.markdown("---")   

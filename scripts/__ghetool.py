@@ -3,8 +3,11 @@ from GHEtool import Borefield, GroundData
 import numpy as np
 import streamlit as st
 import pygfunction as gt
+import pandas as pd
+from io import BytesIO
+import altair as alt
+from streamlit_extras.chart_container import chart_container
 #--
-import streamlit as st 
 
 class GheTool:
     def __init__(self):
@@ -60,6 +63,30 @@ class GheTool:
         with st.expander("Se resultater", expanded=True):
             st.write(f"**{self.N_1 * self.N_2} brønn(er) á {self.H} aktiv brønndybde med {self.B} m avstand**")
             meters = (self.N_1 * self.N_2) * self.H
+            data = pd.DataFrame({
+                "x" : np.arange(0,self.YEARS*12,1),
+                "y1" : borefield.results_month_heating,
+                'y2' : borefield.results_peak_heating
+                })
+            with chart_container(data):
+                c = alt.Chart(data).transform_fold(
+                ['y1', 'y2'],
+                as_=['key', 'Timesmidlet effekt (kWh/h)']).mark_line(color = '#b7dc8f', line = {'color':'#b7dc8f'}, opacity=1).encode(
+                    x=alt.X('Timer i ett år:Q', scale=alt.Scale(domain=[0, 300])),
+                    y=alt.Y('Timesmidlet effekt (kWh/h):Q', stack = True),
+                    color=alt.Color('key:N', scale=alt.Scale(domain=['y1', 'y2'], 
+                    range=['#1d3c34', '#ffdb9a']), legend=alt.Legend(orient='top', direction='vertical', title=None))
+                )
+                st.altair_chart(c, use_container_width=True)
+            #--
+            data = pd.DataFrame({
+                "x" : np.arange(0,self.YEARS*12,1),
+                "y" : borefield.results_month_heating
+                })
+            with chart_container(data):
+                st.altair_chart(alt.Chart(data).mark_line(color = '#1d3c34', line = {'color':'#1d3c34'}, opacity = 1).encode(
+                x=alt.X("x", axis=alt.Axis(title="Måneder"), scale=alt.Scale(domain=(0,300))),
+                y=alt.Y("y", axis=alt.Axis(title="Temperatur [°C]"))), theme="streamlit", use_container_width=True)
             Plotting().xy_simulation_plot(x, 0, self.YEARS, "År", borefield.results_month_heating, 
             borefield.results_peak_heating, "Gj.snittlig kollektorvæsketemperatur [°C]]", "Ved dellast", f"Ved maksimal varmeeffekt", Plotting().GRASS_GREEN, Plotting().GRASS_RED)
             st.write(f"Laveste gj.snittlige kollektorvæsketemperatur v/dellast: **{round(min(borefield.results_month_heating),1)} °C**")
