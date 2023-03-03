@@ -19,7 +19,7 @@ st.set_page_config(page_title="Tidligfasedimensjonering", page_icon="📈")
 with open("styles/main.css") as f:
     st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True) 
     
-st.title("Tidligfasedimensjonering av energibrønnpark")
+st.title("Tidligfasedimensjonering av energibrønffffnpark")
 st.caption("Spørsmål til verktøyet? 📧 magne.syljuasen@asplanviak.no ")
 with st.expander("Hva er dette?"):
     st.header("Hva er dette?")
